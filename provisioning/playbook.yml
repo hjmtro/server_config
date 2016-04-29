@@ -22,6 +22,8 @@
 
     - name: put conf.d/original.conf
       template: src=templates/original.conf dest=/etc/nginx/conf.d/original.conf
+    - name: rename default.conf
+      command: mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/_default.conf.bk removes=/etc/nginx/conf.d/default.conf
 
     - name: install rbenv
       become: no
@@ -47,10 +49,26 @@
         - openssl-devel
         - readline-devel
         - zlib-devel
+        - sqlite-devel # to use sqlite3
 
     - name: install ruby
       become: no
-      shell: ~/.rbenv/bin/rbenv install {{ ruby_version }}; ~/.rbenv/bin/rbenv rehash; ~/.rbenv/bin/rbenv global {{ ruby_version }}
+      shell: ~/.rbenv/bin/rbenv install -s {{ ruby_version }}; ~/.rbenv/bin/rbenv rehash; ~/.rbenv/bin/rbenv global {{ ruby_version }}
+
+    - file: path=/var/www state=directory mode=0777
+
+    - name: put /var/www/deploy_test/shared/config/database.yml
+      template: src=templates/database.yml dest=/var/www/deploy_test/shared/config/database.yml
+    - name: put /var/www/deploy_test/shared/config/secrets.yml
+      template: src=templates/secrets.yml dest=/var/www/deploy_test/shared/config/secrets.yml
+
+    - name: install epel repository
+      yum: name=epel-release state=present
+    - name: yum update # update epel repo
+      yum: name=* state=latest
+    - name: install nodejs
+      yum: name=nodejs state=present
+
 
   handlers:
     - name: start nginx
