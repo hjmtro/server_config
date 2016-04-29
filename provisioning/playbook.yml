@@ -1,0 +1,57 @@
+---
+- hosts: cento
+  user: vagrant
+  become: yes # user = root
+  vars:
+    ruby_version: "2.3.1"
+  tasks:
+    - name: yum update
+      yum: name=* state=latest
+    #- name: Install kernel-devel
+    #  yum: name=kernel-devel state=latest
+    #- name: Install gcc
+    #  yum: name=gcc state=latest
+    - name: install nginx repository
+      yum: name=http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm state=present
+    - name: install nginx
+      yum: name=nginx state=present
+      notify: start nginx
+
+    - name: stop firewalld
+      service: name=firewalld state=stopped
+
+    - name: put conf.d/original.conf
+      template: src=templates/original.conf dest=/etc/nginx/conf.d/original.conf
+
+    - name: install rbenv
+      become: no
+      git: repo=git://github.com/sstephenson/rbenv.git
+           dest=~/.rbenv
+
+    - name: put custom bash_profile
+      become: no
+      template: src=templates/.bash_profile dest=~/
+
+    - name: source ~/.bash_profile
+      become: no
+      shell: source ~/.bash_profile
+
+    - name: install ruby-build
+      become: no
+      git: repo=git://github.com/sstephenson/ruby-build.git
+           dest=~/.rbenv/plugins/ruby-build
+
+    - name: install packages to install ruby
+      yum: name={{ item }} state=present
+      with_items:
+        - openssl-devel
+        - readline-devel
+        - zlib-devel
+
+    - name: install ruby
+      become: no
+      shell: ~/.rbenv/bin/rbenv install {{ ruby_version }}; ~/.rbenv/bin/rbenv rehash; ~/.rbenv/bin/rbenv global {{ ruby_version }}
+
+  handlers:
+    - name: start nginx
+      service: name=nginx state=started
