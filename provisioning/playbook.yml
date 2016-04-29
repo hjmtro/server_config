@@ -69,7 +69,13 @@
     - name: install nodejs
       yum: name=nodejs state=present
 
+    - name: set selinux disabled
+      shell: SELINUX=disabled
+      notify: restart nginx
+
 
   handlers:
     - name: start nginx
       service: name=nginx state=started
+    - name: restart nginx
+      shell: systemctl restart nginx
