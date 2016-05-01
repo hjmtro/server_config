@@ -18,9 +18,6 @@
       yum: name=nginx state=present
       #notify: start nginx
 
-    - name: stop firewalld
-      service: name=firewalld state=stopped
-
     - name: put conf.d/original.conf
       template: src=templates/original.conf dest=/etc/nginx/conf.d/original.conf
     - name: rename default.conf
@@ -88,6 +85,9 @@
 
     - name: start nginx
       service: name=nginx state=started
+
+    - name: stop firewalld
+      service: name=firewalld state=stopped
 
 
   #handlers:
