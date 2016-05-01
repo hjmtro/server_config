@@ -8,10 +8,7 @@
   tasks:
     - name: yum update
       yum: name=* state=latest
-    #- name: Install kernel-devel
-    #  yum: name=kernel-devel state=latest
-    #- name: Install gcc
-    #  yum: name=gcc state=latest
+
     - name: install nginx repository
       yum: name=http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm state=present
     - name: install nginx
@@ -52,13 +49,11 @@
     - name: install ruby
       become: no
       shell: ~/.rbenv/bin/rbenv install -s {{ ruby_version }}; ~/.rbenv/bin/rbenv rehash; ~/.rbenv/bin/rbenv global {{ ruby_version }}
+    - name: gem install bundler
+      become: no
+      shell: ~/.rbenv/shims/gem install bundler
 
     - file: path=/var/www state=directory mode=0777
-
-    - name: put /var/www/deploy_test/shared/config/database.yml
-      template: src=templates/database.yml dest=/var/www/deploy_test/shared/config/database.yml
-    - name: put /var/www/deploy_test/shared/config/secrets.yml
-      template: src=templates/secrets.yml dest=/var/www/deploy_test/shared/config/secrets.yml
 
     - name: install epel repository
       yum: name=epel-release state=present
