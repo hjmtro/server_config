@@ -4,6 +4,7 @@
   become: yes # user = root
   vars:
     ruby_version: "2.3.1"
+    host_ip: "192.168.33.10"
   tasks:
     - name: yum update
       yum: name=* state=latest
@@ -15,7 +16,7 @@
       yum: name=http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm state=present
     - name: install nginx
       yum: name=nginx state=present
-      notify: start nginx
+      #notify: start nginx
 
     - name: stop firewalld
       service: name=firewalld state=stopped
@@ -69,13 +70,26 @@
     - name: install nodejs
       yum: name=nodejs state=present
 
-    - name: set selinux disabled
-      shell: SELINUX=disabled
-      notify: restart nginx
+    - name: put selinux file to set selinux Permissive
+      template: src=templates/selinux dest=/etc/sysconfig/selinux
 
+    - name: update glibc
+      yum: name=glibc state=latest
 
-  handlers:
+    - name: restart machine
+      shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+      async: 1
+      poll: 0
+      ignore_errors: true
+
+    - name: waiting for server to come back
+      become: no
+      local_action: wait_for host={{ host_ip }} state=started delay=10 timeout=100
+
     - name: start nginx
       service: name=nginx state=started
-    - name: restart nginx
-      shell: systemctl restart nginx
+
+
+  #handlers:
+  #  - name: start nginx
+  #    service: name=nginx state=started
